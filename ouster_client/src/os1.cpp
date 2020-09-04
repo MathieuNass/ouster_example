@@ -30,6 +30,7 @@ using ns = std::chrono::nanoseconds;
 struct client {
     int lidar_fd;
     int imu_fd;
+    size_t lidar_packet_bytes;
     Json::Value meta;
     ~client() {
         close(lidar_fd);
@@ -328,11 +329,12 @@ sensor_info parse_metadata(const std::string& meta) {
     return info;
 }
 
-std::shared_ptr<client> init_client(int lidar_port, int imu_port) {
+std::shared_ptr<client> init_client(int lidar_port, int imu_port, int pixels_per_column) {
     auto cli = std::make_shared<client>();
 
     cli->lidar_fd = udp_data_socket(lidar_port);
     cli->imu_fd = udp_data_socket(imu_port);
+    cli->lidar_packet_bytes = 192*pixels_per_column + 320;
 
     if (cli->lidar_fd < 0 || cli->imu_fd < 0)
         return std::shared_ptr<client>();
@@ -342,9 +344,10 @@ std::shared_ptr<client> init_client(int lidar_port, int imu_port) {
 
 std::shared_ptr<client> init_client(const std::string& hostname,
                                     const std::string& udp_dest_host,
+                                    int pixels_per_column,
                                     lidar_mode mode, timestamp_mode ts_mode,
                                     int lidar_port, int imu_port) {
-    auto cli = init_client(lidar_port, imu_port);
+    auto cli = init_client(lidar_port, imu_port, pixels_per_column);
     if (!cli) return std::shared_ptr<client>();
 
     // update requested ports to actual bound ports
@@ -457,8 +460,13 @@ static bool recv_fixed(int fd, void* buf, ssize_t len) {
     return false;
 }
 
+int get_lidar_packet_size(const client& cli)
+{
+    return cli.lidar_packet_bytes;
+}
+
 bool read_lidar_packet(const client& cli, uint8_t* buf) {
-    return recv_fixed(cli.lidar_fd, buf, lidar_packet_bytes);
+    return recv_fixed(cli.lidar_fd, buf, cli.lidar_packet_bytes);
 }
 
 bool read_imu_packet(const client& cli, uint8_t* buf) {

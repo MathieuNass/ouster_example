@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
         std::cout << "Configuring sensor: " << os1_host
                   << " UDP Destination:" << os1_udp_dest << std::endl;
         cli =
-            OS1::init_client(os1_host, os1_udp_dest, mode,
+            OS1::init_client(os1_host, os1_udp_dest, 32, mode,
                              OS1::TIME_FROM_INTERNAL_OSC, lidar_port, imu_port);
     } else {
         if (lidar_port == 0) lidar_port = 7502;
@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
         std::exit(EXIT_FAILURE);
     }
 
-    uint8_t lidar_buf[OS1::lidar_packet_bytes + 1];
+    uint8_t lidar_buf[OS1::get_lidar_packet_size(*cli) + 1];
     uint8_t imu_buf[OS1::imu_packet_bytes + 1];
 
     auto ls = std::unique_ptr<ouster::LidarScan>(new ouster::LidarScan(W, H));

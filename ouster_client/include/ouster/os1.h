@@ -13,7 +13,6 @@
 namespace ouster {
 namespace OS1 {
 
-const size_t lidar_packet_bytes = 12608;
 const size_t imu_packet_bytes = 48;
 
 struct client;
@@ -132,7 +131,7 @@ timestamp_mode timestamp_mode_of_string(const std::string& s);
  * @param imu_port port on which the sensor will send imu data
  * @return pointer owning the resources associated with the connection
  */
-std::shared_ptr<client> init_client(int lidar_port = 0, int imu_port = 0);
+std::shared_ptr<client> init_client(int lidar_port = 0, int imu_port = 0, int pixels_per_column = 32);
 
 /**
  * Connect to and configure the sensor and start listening for data
@@ -144,6 +143,7 @@ std::shared_ptr<client> init_client(int lidar_port = 0, int imu_port = 0);
  */
 std::shared_ptr<client> init_client(const std::string& hostname,
                                     const std::string& udp_dest_host,
+                                    int pixels_per_column = 32, 
                                     lidar_mode mode = MODE_1024x10,
                                     timestamp_mode ts_mode = TIME_FROM_INTERNAL_OSC,
                                     int lidar_port = 0, int imu_port = 0);
@@ -157,6 +157,9 @@ std::shared_ptr<client> init_client(const std::string& hostname,
  * true if imu data is ready to read
  */
 client_state poll_client(const client& cli, int timeout_sec = 1);
+
+
+int get_lidar_packet_size(const client& cli);
 
 /**
  * Read lidar data from the sensor. Will not block

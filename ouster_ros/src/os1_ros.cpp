@@ -20,7 +20,7 @@ bool read_imu_packet(const client& cli, PacketMsg& m) {
 }
 
 bool read_lidar_packet(const client& cli, PacketMsg& m) {
-    m.buf.resize(lidar_packet_bytes + 1);
+    m.buf.resize(OS1::get_lidar_packet_size(cli) + 1);
     return read_lidar_packet(cli, m.buf.data());
 }
 

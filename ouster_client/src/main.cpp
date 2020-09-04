@@ -47,20 +47,33 @@ void print_stats() {
 }
 
 int main(int argc, char** argv) {
-    if (argc != 3) {
+    int pixels_per_column;
+    if (argc == 4){
+        std::cout << "Initing with " << atoi(argv[3]) << " lines" << std::endl;
+        pixels_per_column = atoi(argv[3]);
+    } else if (argc == 3){
+        std::cout << "Initing with default amount lines (32)" << std::endl;
+        
+        std::cout << "Usage: ouster_client_example <os1_hostname> "
+                     "<data_destination_ip> "
+                     "<pixels_per_column> (optional) (32,64,128)"
+                    << std::endl;
+        pixels_per_column = 32;
+    } else {
         std::cerr << "Usage: ouster_client_example <os1_hostname> "
-                     "<data_destination_ip>"
+                     "<data_destination_ip> "
+                     "<pixels_per_column> (optional) (32,64,128)"
                   << std::endl;
         return 1;
     }
-
-    auto cli = OS1::init_client(argv[1], argv[2]);
+    auto cli = OS1::init_client(argv[1], argv[2], pixels_per_column);
+    
     if (!cli) {
         std::cerr << "Failed to connect to client at: " << argv[1] << std::endl;
         return 1;
     }
 
-    uint8_t lidar_buf[OS1::lidar_packet_bytes + 1];
+    uint8_t lidar_buf[OS1::get_lidar_packet_size(*cli) + 1];
     uint8_t imu_buf[OS1::imu_packet_bytes + 1];
 
     print_headers();

@@ -100,7 +100,7 @@ int connection_loop(ros::NodeHandle& nh, OS1::client& cli) {
     auto imu_packet_pub = nh.advertise<PacketMsg>("imu_packets", 100);
 
     PacketMsg lidar_packet, imu_packet;
-    lidar_packet.buf.resize(OS1::lidar_packet_bytes + 1);
+    lidar_packet.buf.resize(OS1::get_lidar_packet_size(cli) + 1);
     imu_packet.buf.resize(OS1::imu_packet_bytes + 1);
 
     while (ros::ok()) {
@@ -147,6 +147,7 @@ int main(int argc, char** argv) {
     // empty indicates "not set" since roslaunch xml can't optionally set params
     auto hostname = nh.param("os1_hostname", std::string{});
     auto udp_dest = nh.param("os1_udp_dest", std::string{});
+    auto pixels_per_column = nh.param("pixels_per_column", 32);
     auto lidar_port = nh.param("os1_lidar_port", 0);
     auto imu_port = nh.param("os1_imu_port", 0);
     auto replay = nh.param("replay", false);
@@ -181,7 +182,10 @@ int main(int argc, char** argv) {
         ROS_ERROR("Must specify both hostname and udp destination");
         return EXIT_FAILURE;
     }
-
+    if ((pixels_per_column != 16) && (pixels_per_column != 32) && (pixels_per_column != 64) && (pixels_per_column != 128)) {
+        ROS_ERROR("pixels_per_column = %d, must be either 16,32,64 or 128", pixels_per_column);
+        return EXIT_FAILURE;
+    }
     if (replay) {
         ROS_INFO("Running in replay mode");
 
@@ -203,10 +207,14 @@ int main(int argc, char** argv) {
         ROS_INFO("Sending data to %s using lidar_mode: %s", udp_dest.c_str(),
                  lidar_mode.c_str());
 
-        auto cli = OS1::init_client(hostname, udp_dest,
+         ROS_INFO("pixels_per_column = %d", pixels_per_column);
+
+
+        auto cli = OS1::init_client(hostname, udp_dest, 
+                                    pixels_per_column,
                                     OS1::lidar_mode_of_string(lidar_mode),
                                     OS1::timestamp_mode_of_string(timestamp_mode),
-                                    lidar_port, imu_port);
+                                    lidar_port, imu_port = imu_port);
 
         if (!cli) {
             ROS_ERROR("Failed to initialize sensor at: %s", hostname.c_str());
